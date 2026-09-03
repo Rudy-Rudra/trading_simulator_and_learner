@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIMDEX Pro — Gamified ₹1 Lakh Trading Simulator & Learner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="app_logo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP HEADER -->
+  <header class="topbar">
+    <div class="brand-section">
+      <img src="app_logo.png" alt="App Logo" class="brand-logo-img">
+      <div class="brand-info">
+        <h1>
+          SIMDEX
+          <span class="brand-tag">₹1 Lakh Edition</span>
+        </h1>
+        <div class="brand-sub">Gamified Trading Simulator &amp; Learner</div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Live Market Clock (h:m:s) -->
+      <div class="live-market-pill">
+        <span class="live-dot"></span>
+        <span style="font-size: 11px; font-weight: 700; color: var(--green);">LIVE MARKET</span>
+        <span style="color: var(--text-muted);">·</span>
+        <span class="time-display" id="liveClockDisplay">--:--:--</span>
+      </div>
+
+      <!-- User Profile Navigation Button -->
+      <button class="profile-nav-btn" id="openProfileBtn" title="View Profile, Levels, Certificate & Settings">
+        <span class="profile-avatar-circle" id="topAvatarLetter">T</span>
+        <span id="topProfileName">Trader</span>
+        <span class="profile-level-badge" id="topLevelBadge">⭐ Lvl 1</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- BREAKING NEWS TICKER -->
+  <section class="news-banner">
+    <div class="news-tag">⚡ Live News</div>
+    <div class="news-content">
+      <div class="news-text" id="newsBannerText">
+        Market operates smoothly. Keep an eye on sector trends, momentum breakouts, and golden trading rules!
+      </div>
+    </div>
+  </section>
+
+  <!-- TICKER TAPE -->
+  <div class="ticker-tape">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+
+  <!-- MAIN 3-COLUMN GRID -->
+  <main class="grid">
+
+    <!-- LEFT: WATCHLIST WITH SEARCH -->
+    <aside class="panel watchlist-panel">
+      <div class="panel-header-row">
+        <span class="panel-title">📋 Watchlist (Cards / Stocks)</span>
+      </div>
+      <div class="watchlist-search-box">
+        <input type="text" id="watchlistSearchInput" class="search-input" placeholder="🔍 Search stock or sector...">
+      </div>
+      <div class="watch-list" id="watchlistBody"></div>
+    </aside>
+
+    <!-- CENTER: CHART PANEL WITH INTERACTIVE CROSSHAIR -->
+    <section class="panel chart-panel">
+      <div class="chart-head">
+        <div class="chart-head-left">
+          <h2>
+            <span id="chartSymbol">RELI-TECH</span>
+            <span class="sector-badge" id="chartSector">Mega Tech</span>
+          </h2>
+          <div class="cname" id="chartName">Reliance & Tata Tech</div>
+        </div>
+        <div class="chart-head-right">
+          <div class="chart-price" id="chartPrice">₹0.00</div>
+          <div class="chart-change" id="chartChange">+0.00 (+0.00%)</div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="item">Open <b id="statOpen">₹0.00</b></div>
+        <div class="item">High <b id="statHigh">₹0.00</b></div>
+        <div class="item">Low <b id="statLow">₹0.00</b></div>
+        <div class="item">Volume <b id="statVol">0</b></div>
+      </div>
+
+      <div class="chart-controls-bar">
+        <!-- Timeframes -->
+        <div class="timeframe-row">
+          <button class="tf-btn" data-group="2">1M</button>
+          <button class="tf-btn active" data-group="5">5M</button>
+          <button class="tf-btn" data-group="12">15M</button>
+          <button class="tf-btn" data-group="24">30M</button>
+        </div>
+
+        <!-- Technical Overlays -->
+        <div class="indicator-toggles">
+          <button class="ind-btn active" id="toggleMA" title="20-period Moving Average Trend Line">📈 20-SMA</button>
+          <button class="ind-btn active" id="toggleVol" title="Volume Activity Bars">📊 Volume</button>
+        </div>
+      </div>
+
+      <div class="chart-canvas-wrap" id="chartCanvasWrap">
+        <canvas id="priceChart"></canvas>
+        <div class="chart-tooltip" id="chartTooltip"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT: ORDER PANEL (4 ACTION BUTTONS) -->
+    <aside class="panel order-panel">
+      <div class="panel-header-row">
+        <span class="panel-title">🕹️ The 4 Action Buttons</span>
+      </div>
+
+      <!-- Action Mode Tabs -->
+      <div class="order-modes-grid">
+        <div class="mode-tab buy-now active" data-mode="buy-now">
+          <span>🛒 Buy Now</span>
+          <span class="pro-label">Market Order</span>
+        </div>
+        <div class="mode-tab limit-buy" data-mode="limit-buy">
+          <span>⏳ Wait for Price</span>
+          <span class="pro-label">Limit Order</span>
+        </div>
+        <div class="mode-tab stop-loss" data-mode="stop-loss">
+          <span>🛡️ Safety Net</span>
+          <span class="pro-label">Stop-Loss</span>
+        </div>
+        <div class="mode-tab take-profit" data-mode="take-profit">
+          <span>🎁 Pocket Prize</span>
+          <span class="pro-label">Take-Profit</span>
+        </div>
+      </div>
+
+      <!-- Mode explanation box -->
+      <div class="mode-info-card" id="modeInfoText">
+        🛒 Buy Now: Grabs the card/stock immediately at the current market price.
+      </div>
+
+      <div class="order-line">
+        <span>Available Wallet:</span>
+        <b id="orderAvailableCash">₹1,00,000.00</b>
+      </div>
+      <div class="order-line">
+        <span>Current Holdings:</span>
+        <b id="orderOwnedShares">0 shares</b>
+      </div>
+
+      <!-- Quantity input -->
+      <div class="input-group">
+        <label class="input-label" for="orderQty">Quantity (Shares)</label>
+        <div class="qty-row">
+          <button class="qty-btn" id="qtyDec">−</button>
+          <input type="number" id="orderQty" class="num-input" value="10" min="1" step="1">
+          <button class="qty-btn" id="qtyInc">+</button>
+        </div>
+        <div class="quick-qty-chips">
+          <button class="chip-btn" data-qty="5">5</button>
+          <button class="chip-btn" data-qty="10">10</button>
+          <button class="chip-btn" data-qty="25">25</button>
+          <button class="chip-btn" data-qty="MAX">MAX</button>
+        </div>
+      </div>
+
+      <!-- Target Price Input (for Limit / StopLoss / TakeProfit) -->
+      <div class="input-group" id="targetPriceGroup" style="display: none;">
+        <label class="input-label" id="targetPriceLabel" for="orderTargetPrice">Target Lucky Price (₹)</label>
+        <input type="number" id="orderTargetPrice" class="num-input" value="0.00" step="0.5">
+      </div>
+
+      <div class="order-line">
+        <span>Estimated Total:</span>
+        <b id="orderEstTotal" style="color: var(--amber);">₹0.00</b>
+      </div>
+
+      <!-- Main Action Button -->
+      <button class="action-btn-main buy" id="executeOrderBtn">
+        Buy Now (RELI-TECH)
+      </button>
+
+      <!-- Instant Sell Button -->
+      <button class="instant-sell-btn" id="instantSellBtn">
+        💰 Sell Now (Market Sell)
+      </button>
+
+      <div class="divider"></div>
+
+      <!-- Portfolio Snapshot Card -->
+      <div class="portfolio-card">
+        <div class="portfolio-line"><span class="label">Cash Balance:</span><span class="val" id="cashVal">₹1,00,000.00</span></div>
+        <div class="portfolio-line"><span class="label">Invested Value:</span><span class="val" id="holdingsVal">₹0.00</span></div>
+        <div class="portfolio-line"><span class="label">Total Net Worth:</span><span class="val" id="equityVal">₹1,00,00,000.00</span></div>
+        <div class="portfolio-line"><span class="label">Today's P&amp;L:</span><span class="val" id="dayPnlVal">₹0.00</span></div>
+        <canvas id="equityChart"></canvas>
+      </div>
+    </aside>
+  </main>
+
+  <!-- BOTTOM TABS (POSITIONS, PENDING ORDERS, BLOTTER, STATS) -->
+  <section class="panel bottom-section">
+    <div class="tabs-nav">
+      <button class="tab-nav-btn active" data-target="tabPositions">
+        💼 Open Positions <span class="tab-badge" id="positionsBadge">0</span>
+      </button>
+      <button class="tab-nav-btn" data-target="tabOrders">
+        ⏳ Active Safety &amp; Limit Orders <span class="tab-badge" id="ordersBadge">0</span>
+      </button>
+      <button class="tab-nav-btn" data-target="tabBlotter">
+        📜 Trade Blotter Log <span class="tab-badge" id="blotterBadge">0</span>
+      </button>
+      <button class="tab-nav-btn" data-target="tabStats">
+        📊 Performance &amp; Analytics
+      </button>
+    </div>
+
+    <!-- 1. Open Positions Tab -->
+    <div class="tab-pane active" id="tabPositions">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Shares Owned</th>
+              <th>Avg Buy Price</th>
+              <th>Live Price</th>
+              <th>Current Value</th>
+              <th>Unrealized P&amp;L</th>
+              <th>Return %</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="positionsBody"></tbody>
+        </table>
+        <div class="empty-state" id="positionsEmpty">
+          <span class="emoji">🧸</span>
+          No open positions yet. Use <b>Buy Now</b> or <b>Wait for My Price</b> to buy your first stock!
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Active Orders Tab -->
+    <div class="tab-pane" id="tabOrders">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Set Time</th>
+              <th>Symbol</th>
+              <th>Order Action</th>
+              <th>Quantity</th>
+              <th>Trigger Price</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="pendingOrdersBody"></tbody>
+        </table>
+        <div class="empty-state" id="pendingOrdersEmpty">
+          <span class="emoji">🛡️</span>
+          No active limit orders or safety nets currently waiting.
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Trade Blotter Tab -->
+    <div class="tab-pane" id="tabBlotter">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
+        <button class="profile-action-btn" id="exportBlotterBtn" style="font-size: 11px; padding: 4px 10px;">📥 Export Trades (CSV)</button>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Side</th>
+              <th>Symbol</th>
+              <th>Method</th>
+              <th>Quantity</th>
+              <th>Execution Price</th>
+              <th>Total Amount</th>
+            </tr>
+          </thead>
+          <tbody id="blotterBody"></tbody>
+        </table>
+        <div class="empty-state" id="blotterEmpty">
+          <span class="emoji">📜</span>
+          Executed trades will appear here as they occur.
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Performance & Analytics Tab -->
+    <div class="tab-pane" id="tabStats">
+      <div class="stats-overview-grid">
+        <div class="stat-card">
+          <div class="sc-label">Total Trades Executed</div>
+          <div class="sc-value" id="statTotalTrades">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-label">Win Rate</div>
+          <div class="sc-value" id="statWinRate">0.0%</div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-label">Total Realized P&amp;L</div>
+          <div class="sc-value" id="statRealizedPnl">₹0.00</div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-label">Best Single Trade</div>
+          <div class="sc-value pos" id="statBestTrade">₹0.00</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">
+    SIMDEX Pro is a gamified educational simulation. All ₹1 Lakh funds, ticker symbols, and market news are virtual for practice purposes.
+  </footer>
+</div>
+
+<!-- ==========================================================================
+     USER PROFILE & SETTINGS MODAL
+     ========================================================================== -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal-card" style="max-width: 720px;">
+    <div class="modal-header">
+      <h3>👤 Trader Profile &amp; Control Hub</h3>
+      <button class="modal-close-btn" id="closeProfileBtn">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Profile Header -->
+      <div class="profile-card-header">
+        <div class="profile-big-avatar" id="modalAvatarLetter">T</div>
+        <div class="profile-header-meta">
+          <h4 id="modalProfileDisplayName">Trader</h4>
+          <p id="modalProfileDobDisplay">DOB: Not set · Starting Balance: ₹1,00,000</p>
+        </div>
+      </div>
+
+      <!-- Profile Inputs (Name & DOB) -->
+      <div class="profile-form-grid">
+        <div class="profile-input-box">
+          <label for="profileNameInput">Full Name</label>
+          <input type="text" id="profileNameInput" class="profile-text-input" placeholder="Enter your name...">
+        </div>
+        <div class="profile-input-box">
+          <label for="profileDobInput">Date of Birth (DOB)</label>
+          <input type="date" id="profileDobInput" class="profile-text-input">
+        </div>
+      </div>
+
+      <!-- 5 Gamified Progression Levels -->
+      <div class="levels-container">
+        <div class="levels-title-row">
+          <h4>🏆 Progression Pathway (5 Levels)</h4>
+          <span style="font-family: var(--font-mono); font-size: 12px; color: var(--amber); font-weight: 700;" id="currentLevelLabel">Level 1 (₹1.00L)</span>
+        </div>
+        <div class="level-progress-bar-bg">
+          <div class="level-progress-fill" id="levelProgressBar"></div>
+        </div>
+        <div class="levels-step-list">
+          <div class="level-step-card achieved" id="levelCard1">
+            <div class="step-num">Level 1</div>
+            <div class="step-name">🌱 Rookie</div>
+            <div class="step-req">₹1.00 Lakh+</div>
+          </div>
+          <div class="level-step-card" id="levelCard2">
+            <div class="step-num">Level 2</div>
+            <div class="step-name">📈 Skilled</div>
+            <div class="step-req">₹1.10 Lakh+</div>
+          </div>
+          <div class="level-step-card" id="levelCard3">
+            <div class="step-num">Level 3</div>
+            <div class="step-name">🚀 Pro</div>
+            <div class="step-req">₹1.20 Lakh+</div>
+          </div>
+          <div class="level-step-card" id="levelCard4">
+            <div class="step-num">Level 4</div>
+            <div class="step-name">💎 Master</div>
+            <div class="step-req">₹1.30 Lakh+</div>
+          </div>
+          <div class="level-step-card" id="levelCard5">
+            <div class="step-num">Level 5</div>
+            <div class="step-name">👑 Legend</div>
+            <div class="step-req">₹1.50 Lakh+</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Certificate Banner -->
+      <div class="certificate-callout-box">
+        <div class="cert-callout-text">
+          <h5>🎓 Level 5 Grand Certificate of Trading Mastery</h5>
+          <p>Reach Level 5 (₹1.50 Lakh) to unlock your verified official certificate!</p>
+        </div>
+        <button class="view-cert-btn" id="openCertificateBtn">
+          📜 View Certificate Preview
+        </button>
+      </div>
+
+      <!-- Customizations & Controls -->
+      <div class="panel-title" style="margin-bottom: 8px;">⚙️ Controls &amp; Customizations</div>
+      <div class="profile-controls-grid">
+        <!-- Theme Picker -->
+        <div>
+          <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">THEME MODE</div>
+          <div class="profile-theme-picker">
+            <button class="profile-theme-btn" id="pThemeLightBtn" data-theme="light">☀️ Light</button>
+            <button class="profile-theme-btn" id="pThemeSystemBtn" data-theme="system">💻 System</button>
+            <button class="profile-theme-btn active" id="pThemeDarkBtn" data-theme="dark">🌙 Dark</button>
+          </div>
+        </div>
+
+        <!-- Audio Toggle -->
+        <div>
+          <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">SOUND EFFECTS</div>
+          <button class="profile-action-btn" id="profileSoundBtn" style="width: 100%;">
+            🔊 Sound On
+          </button>
+        </div>
+
+        <!-- User Guide -->
+        <div>
+          <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">LEARNING GUIDE</div>
+          <button class="profile-action-btn" id="profileGuideBtn" style="width: 100%; border-color: rgba(240, 185, 11, 0.4); color: var(--amber);">
+            📖 User Guide
+          </button>
+        </div>
+
+        <!-- Hard Reset -->
+        <div>
+          <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">SIMULATION RESET</div>
+          <button class="profile-action-btn danger" id="profileResetBtn" style="width: 100%;">
+            ↺ Reset to ₹1 Lakh
+          </button>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="view-cert-btn" id="saveProfileBtn">Save Profile &amp; Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     OFFICIAL LEVEL 5 CERTIFICATE MODAL (WITH BLUR & LOCK OVERLAY)
+     ========================================================================== -->
+<div class="modal-overlay" id="certificateModal">
+  <div class="modal-card" style="max-width: 740px;">
+    <div class="modal-header">
+      <h3 id="certModalHeaderTitle">🔒 Certificate of Trading Mastery (Locked Preview)</h3>
+      <button class="modal-close-btn" id="closeCertModalBtn">&times;</button>
+    </div>
+    <div class="modal-body" style="background: var(--bg-void); padding: 16px;">
+      
+      <div class="certificate-container-relative">
+        <!-- Lock Overlay shown when blurred -->
+        <div class="certificate-lock-overlay" id="certificateLockOverlay">
+          <div class="cert-lock-icon">🔒</div>
+          <div class="cert-lock-title">Certificate Locked</div>
+          <div class="cert-lock-desc">
+            You must reach <b>Level 5: Legendary Champion (₹1,50,000 Portfolio Value)</b> to remove the blur, verify your credentials, and print your official certificate.
+          </div>
+          <div class="cert-progress-status" id="certLockStatusText">
+            Current Net Worth: ₹1,00,000.00 / Target: ₹1,50,000.00
+          </div>
+        </div>
+
+        <!-- Printable Certificate Box (Blurred when locked) -->
+        <div class="certificate-wrapper blurred" id="printableCertificate">
+          <div class="cert-corner-decor cert-tl"></div>
+          <div class="cert-corner-decor cert-tr"></div>
+          <div class="cert-corner-decor cert-bl"></div>
+          <div class="cert-corner-decor cert-br"></div>
+
+          <div class="cert-header">
+            <h2>Certificate of Mastery</h2>
+            <p>SIMDEX Financial Simulator &amp; Trading Academy</p>
+          </div>
+
+          <div class="cert-subhead">This official certificate is proudly presented to</div>
+          <div class="cert-name" id="certUserName">Trader Name</div>
+
+          <div class="cert-body">
+            for successfully demonstrating exceptional trading discipline, mastering the 4 core order types, executing risk management strategies, and achieving <b>Level 5 Legendary Champion</b> status with portfolio net worth exceeding <b>₹1,50,000.00</b>.
+          </div>
+
+          <div class="cert-footer-row">
+            <div class="cert-sign-block">
+              <div style="font-size: 12px; color: #4a5568;">Date of Award: <b id="certAwardDate">03 Sep 2026</b></div>
+              <div style="font-size: 12px; color: #4a5568;" id="certUserDobLine">DOB: 15 Aug 2008</div>
+              <div class="cert-sign-line">Director of SIMDEX Simulator</div>
+            </div>
+
+            <div class="cert-stamp">
+              <span class="seal-icon">⭐</span>
+              <span>OFFICIAL</span>
+              <span>VERIFIED</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="profile-action-btn" id="printCertBtn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+      <button class="view-cert-btn" id="doneCertBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     USER GUIDE & CHEAT SHEET MODAL (FROM resources.md)
+     ========================================================================== -->
+<div class="modal-overlay" id="guideModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>🎮 Trading Simulator Cheat Sheet (Kid-Friendly &amp; Pro Edition)</h3>
+      <button class="modal-close-btn" id="closeGuideBtn">&times;</button>
+    </div>
+    <div class="modal-body guide-content">
+      <p style="color: var(--amber); font-weight: 600; margin-bottom: 14px;">
+        A quick guide to trading toy cards, reading mood bars, and saving your ₹1 Lakh game coins!
+      </p>
+
+      <h2>🧸 1. The Game Words</h2>
+      <ul>
+        <li><b>Card (Stock):</b> A special piece of a big company you buy (like Reliance Tech or Pixel Games).</li>
+        <li><b>Market:</b> The playground where everyone meets to trade cards and coins.</li>
+        <li><b>Bull 🐂:</b> A happy player who thinks prices will go up like a flying balloon!</li>
+        <li><b>Bear 🐻:</b> A grumpy player who thinks prices will fall down like a heavy rock!</li>
+        <li><b>The Spread:</b> The tiny difference between what buyers want to pay and what sellers want to get.</li>
+      </ul>
+
+      <h2>🕹️ 2. The 4 Action Buttons</h2>
+      <table class="guide-table">
+        <thead>
+          <tr>
+            <th>Button</th>
+            <th>What It Does</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>🛒 Buy Now</b><br><small style="color: var(--text-muted);">(Market Order)</small></td>
+            <td>Grabs the card immediately, whatever it costs right now.</td>
+            <td><i>"I want that shiny card right this second!"</i></td>
+          </tr>
+          <tr>
+            <td><b>⏳ Wait for My Price</b><br><small style="color: var(--text-muted);">(Limit Order)</small></td>
+            <td>Buys automatically only if the seller drops the price to your lucky number.</td>
+            <td><i>"I will only pay ₹500, not ₹550."</i></td>
+          </tr>
+          <tr>
+            <td><b>🛡️ Safety Net</b><br><small style="color: var(--text-muted);">(Stop-Loss)</small></td>
+            <td>Sells automatically if the price starts dropping so you don't lose all your coins.</td>
+            <td><i>"If the price falls to ₹450, sell it so I keep the rest of my coins safe."</i></td>
+          </tr>
+          <tr>
+            <td><b>🎁 Pocket the Prize</b><br><small style="color: var(--text-muted);">(Take-Profit)</small></td>
+            <td>Sells automatically once you reach your target reward.</td>
+            <td><i>"If it hits ₹650, sell it and keep the prize!"</i></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>🕯️ 3. Candlesticks (The Mood Bars)</h2>
+      <ul>
+        <li><b>🟢 Green Bar (Happy):</b> The price started lower and ended higher! The buyers won that round.</li>
+        <li><b>🔴 Red Bar (Sad):</b> The price started higher and fell down. The sellers won that round.</li>
+        <li><b>Thin Lines (Wicks):</b> Show the highest sky and lowest floor the price reached during that turn.</li>
+      </ul>
+
+      <h2>🛡️ 4. The 4 Golden Rules</h2>
+      <ol style="padding-left: 20px; line-height: 1.8;">
+        <li><b>Don't Bet the Whole Piggy Bank:</b> If you have ₹1 Lakh, never risk losing more than 1% to 2% on a single try.</li>
+        <li><b>Always Use Your Safety Net:</b> Never buy a card without setting your stop-loss floor first!</li>
+        <li><b>Aim for Bigger Treats:</b> Only make a trade if the prize you can win is at least double what you might lose (a 1-to-2 deal).</li>
+        <li><b>Keep Cool:</b> If you lose a round, don't get mad and mash buttons to win it back. Take a quick break and wait for a clear chance!</li>
+      </ol>
+    </div>
+    <div class="modal-footer">
+      <button class="view-cert-btn" onclick="document.getElementById('guideModal').classList.remove('open')">Got It, Let's Trade!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     HARD RESET CONFIRMATION MODAL
+     ========================================================================== -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal-card" style="max-width: 480px;">
+    <div class="modal-header">
+      <h3 style="color: var(--red);">↺ Reset Entire Simulation?</h3>
+      <button class="modal-close-btn" id="cancelResetBtn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom: 12px;">Are you sure you want to reset your trading simulator?</p>
+      <ul style="padding-left: 20px; color: var(--text-muted); font-size: 12.5px;">
+        <li>Your wallet will be restored back to <b>₹1,00,000 (₹1 Lakh)</b>.</li>
+        <li>All current stock positions and safety orders will be cleared.</li>
+        <li>Trade logs and analytics history will be reset.</li>
+      </ul>
+    </div>
+    <div class="modal-footer">
+      <button class="profile-action-btn" onclick="document.getElementById('resetModal').classList.remove('open')">Cancel</button>
+      <button class="profile-action-btn danger" id="confirmResetBtn">Yes, Reset to ₹1 Lakh</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastHost"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
