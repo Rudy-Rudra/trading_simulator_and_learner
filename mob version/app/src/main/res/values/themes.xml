@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.SIMDEX" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#07090E</item>
+        <item name="android:navigationBarColor">#0E131B</item>
+        <item name="android:windowBackground">#07090E</item>
+    </style>
+</resources>
