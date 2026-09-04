@@ -1,5 +1,5 @@
 /**
- * SIMDEX Pro — Gamified ₹1 Lakh Trading Simulator & Learner
+ * SimDex Pro — Gamified ₹1 Lakh Trading Simulator & Learner
  * Features:
  * - Starting capital: ₹1,00,000 (₹1 Lakh)
  * - 5 Gamified Progression Levels:
@@ -144,6 +144,8 @@
     dob: ""
   };
   let previousLevel = 1;
+  let highestLevelAchieved = 1;
+  let isInitialLoad = true;
 
   let selectedStock = STOCKS[0];
   let currentOrderMode = "buy-now"; // 'buy-now' | 'limit-buy' | 'stop-loss' | 'take-profit'
@@ -236,10 +238,16 @@
       localStorage.setItem("SIMDEX_THEME_CHOICE_V3", theme);
     } catch (e) {}
 
-    drawPriceChart();
+    if (selectedStock && Array.isArray(selectedStock.history) && selectedStock.history.length > 0) {
+      drawPriceChart();
+    }
     const eqCanvas = document.getElementById("equityChart");
-    if (eqCanvas) drawEquityLine(eqCanvas, equityHistory);
-    renderWatchlist();
+    if (eqCanvas && Array.isArray(equityHistory) && equityHistory.length > 0) {
+      drawEquityLine(eqCanvas, equityHistory);
+    }
+    if (Array.isArray(STOCKS) && STOCKS[0] && Array.isArray(STOCKS[0].history) && STOCKS[0].history.length > 0) {
+      renderWatchlist();
+    }
   }
 
   if (window.matchMedia) {
@@ -274,13 +282,28 @@
 
   function saveState() {
     try {
+      const stockState = STOCKS.map(s => ({
+        sym: s.sym,
+        price: s.price,
+        prevPrice: s.prevPrice,
+        openPrice: s.openPrice,
+        high: s.high,
+        low: s.low,
+        volume: s.volume,
+        history: Array.isArray(s.history) ? s.history.slice(-300) : [s.price]
+      }));
+
       const state = {
         cash,
         holdings,
         pendingOrders,
         trades,
         soundEnabled,
-        equityHistory: equityHistory.slice(-120)
+        equityHistory: Array.isArray(equityHistory) ? equityHistory.slice(-120) : [],
+        previousLevel: highestLevelAchieved,
+        highestLevelAchieved,
+        selectedSym: selectedStock ? selectedStock.sym : STOCKS[0].sym,
+        stocks: stockState
       };
       localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(state));
       saveProfile();
@@ -293,14 +316,11 @@
     try {
       loadProfile();
 
-      const themeChoice = localStorage.getItem("SIMDEX_THEME_CHOICE_V3") || "dark";
-      applyTheme(themeChoice);
-
       const raw = localStorage.getItem(APP_STORAGE_KEY);
       if (!raw) return false;
       const state = JSON.parse(raw);
-      if (typeof state.cash === "number") cash = state.cash;
-      if (state.holdings) holdings = state.holdings;
+      if (typeof state.cash === "number" && !isNaN(state.cash)) cash = state.cash;
+      if (state.holdings && typeof state.holdings === "object") holdings = state.holdings;
       if (Array.isArray(state.pendingOrders)) pendingOrders = state.pendingOrders;
       if (Array.isArray(state.trades)) trades = state.trades;
       if (Array.isArray(state.equityHistory)) equityHistory = state.equityHistory;
@@ -308,6 +328,37 @@
         soundEnabled = state.soundEnabled;
         updateSoundButton();
       }
+      if (typeof state.highestLevelAchieved === "number") {
+        highestLevelAchieved = state.highestLevelAchieved;
+        previousLevel = state.highestLevelAchieved;
+      } else if (typeof state.previousLevel === "number") {
+        highestLevelAchieved = state.previousLevel;
+        previousLevel = state.previousLevel;
+      }
+
+      // Restore stock prices and candle histories if saved
+      if (Array.isArray(state.stocks) && state.stocks.length > 0) {
+        state.stocks.forEach(saved => {
+          const s = STOCKS.find(x => x.sym === saved.sym);
+          if (s && typeof saved.price === "number") {
+            s.price = saved.price;
+            s.prevPrice = typeof saved.prevPrice === "number" ? saved.prevPrice : saved.price;
+            s.openPrice = typeof saved.openPrice === "number" ? saved.openPrice : saved.price;
+            s.high = typeof saved.high === "number" ? saved.high : saved.price;
+            s.low = typeof saved.low === "number" ? saved.low : saved.price;
+            s.volume = typeof saved.volume === "number" ? saved.volume : 100000;
+            if (Array.isArray(saved.history) && saved.history.length > 0) {
+              s.history = saved.history;
+            }
+          }
+        });
+      }
+
+      if (state.selectedSym) {
+        const match = STOCKS.find(x => x.sym === state.selectedSym);
+        if (match) selectedStock = match;
+      }
+
       return true;
     } catch (e) {
       console.error("Failed to load state:", e);
@@ -322,6 +373,7 @@
     pendingOrders = [];
     trades = [];
     equityHistory = [];
+    highestLevelAchieved = 1;
     previousLevel = 1;
     initStocks();
     saveState();
@@ -673,14 +725,16 @@
       }
     }
 
-    if (current.level > previousLevel) {
+    if (!isInitialLoad && current.level > highestLevelAchieved) {
+      highestLevelAchieved = current.level;
+      previousLevel = current.level;
       playLevelUpSound();
       showToast(`🎉 Level Up! You achieved ${current.name} (${current.label})!`, "success");
       if (current.level === 5) {
         showToast(`👑 Congratulations! You unlocked the Level 5 Certificate of Mastery!`, "success");
       }
+      saveState();
     }
-    previousLevel = current.level;
   }
 
   function updateLiveClock() {
@@ -726,7 +780,7 @@
       return sum + (holdings[sym].qty * price);
     }, 0);
     const equity = cash + holdingsValue;
-    const isLevel5 = equity >= 150000;
+    const isLevel5 = equity >= 150000 || highestLevelAchieved >= 5;
 
     document.getElementById("certUserName").textContent = name;
     document.getElementById("certAwardDate").textContent = new Date().toLocaleDateString("en-IN", {
@@ -886,7 +940,7 @@
 
     // 20-SMA
     if (showMA) {
-      const ma20 = calculateSMA(candles, 8);
+      const ma20 = calculateSMA(candles, 20);
       ctx.strokeStyle = "#f0b90b";
       ctx.lineWidth = 1.8;
       ctx.beginPath();
@@ -1646,18 +1700,23 @@
   }
 
   function boot() {
+    isInitialLoad = true;
+    initStocks();
+
     const loaded = loadState();
     if (!loaded) {
-      initStocks();
       saveState();
-    } else {
-      initStocks();
     }
+
+    const themeChoice = localStorage.getItem("SIMDEX_THEME_CHOICE_V3") || "dark";
+    applyTheme(themeChoice);
 
     setupEvents();
     renderAll();
     setOrderMode("buy-now");
     updateLiveClock();
+
+    isInitialLoad = false;
 
     setInterval(tick, 1400);
     setInterval(updateLiveClock, 1000);

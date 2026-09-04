@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SIMDEX THEME SYSTEM (Dark / Light / System)
+   SimDex THEME SYSTEM (Dark / Light / System)
    ========================================================================== */
 :root {
   /* Default Dark Mode Theme */
@@ -401,9 +401,21 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 
 @media (max-width: 880px) {
   .grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .chart-panel {
+    order: 1;
+    width: 100%;
+  }
+  .order-panel {
+    order: 2;
+    width: 100%;
   }
   .watchlist-panel {
+    order: 3;
+    width: 100%;
     grid-column: auto;
   }
 }
@@ -1561,7 +1573,12 @@ td.neg { color: var(--red); }
   .certificate-wrapper {
     box-shadow: none;
     border: 8px solid #d4af37;
+  }
+  .certificate-wrapper:not(.blurred) {
     filter: none !important;
+  }
+  .certificate-wrapper.blurred {
+    display: none !important;
   }
 }
 

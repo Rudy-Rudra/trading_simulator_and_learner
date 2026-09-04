@@ -29,7 +29,7 @@ public class MainActivity extends Activity {
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.setStatusBarColor(0xFF07090E); // SIMDEX dark theme background
+            window.setStatusBarColor(0xFF07090E); // SimDex dark theme background
             window.setNavigationBarColor(0xFF0E131B);
         }
 
@@ -82,7 +82,7 @@ public class MainActivity extends Activity {
             if (backPressedTime + 2000 > System.currentTimeMillis()) {
                 super.onBackPressed();
             } else {
-                Toast.makeText(this, "Press back again to exit SIMDEX", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Press back again to exit SimDex", Toast.LENGTH_SHORT).show();
                 backPressedTime = System.currentTimeMillis();
             }
         }

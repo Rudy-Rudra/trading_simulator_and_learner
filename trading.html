@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIMDEX — Live Trading Simulator</title>
+<title>SimDex — Live Trading Simulator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -112,9 +112,11 @@
   .grid{display:grid;grid-template-columns:250px 1fr 320px;gap:16px;align-items:start;}
   @media (max-width:1150px){.grid{grid-template-columns:1fr 320px;}
     .watchlist-panel{grid-column:1 / span 2;}
-  }
-  @media (max-width:760px){.grid{grid-template-columns:1fr;}
-    .watchlist-panel{grid-column:auto;}
+  @media (max-width:760px){
+    .grid{display:flex;flex-direction:column;gap:14px;}
+    .chart-panel{order:1;width:100%;}
+    .order-panel{order:2;width:100%;}
+    .watchlist-panel{order:3;width:100%;grid-column:auto;}
   }
 
   .panel{
@@ -276,13 +278,13 @@
     <div class="brand">
       <div class="brand-mark">SX</div>
       <div class="brand-text">
-        <h1>SIMDEX</h1>
+        <h1>SimDex</h1>
         <div class="sub">Practice Trading Terminal</div>
       </div>
     </div>
     <div class="session-stats">
       <div class="stat-block">
-        <div class="label">Simdex Index</div>
+        <div class="label">SimDex Index</div>
         <div class="value" id="indexValue">10,000.00</div>
       </div>
       <div class="stat-block">
@@ -433,6 +435,76 @@
     if(n>=1e3) return (n/1e3).toFixed(1)+'K';
     return String(Math.round(n));
   }
+  const TRADING_STORAGE_KEY = "SIMDEX_PRACTICE_TERMINAL_STATE_V2";
+
+  function saveState(){
+    try {
+      const stockState = STOCKS.map(s => ({
+        sym: s.sym,
+        price: s.price,
+        prevPrice: s.prevPrice,
+        openPrice: s.openPrice,
+        high: s.high,
+        low: s.low,
+        volume: s.volume,
+        history: s.history ? s.history.slice(-200) : [s.price]
+      }));
+      const state = {
+        cash,
+        holdings,
+        trades,
+        equityHistory: equityHistory.slice(-100),
+        selectedSym: selectedStock ? selectedStock.sym : STOCKS[0].sym,
+        stocks: stockState
+      };
+      localStorage.setItem(TRADING_STORAGE_KEY, JSON.stringify(state));
+    } catch(e){}
+  }
+
+  function loadState(){
+    try {
+      const raw = localStorage.getItem(TRADING_STORAGE_KEY);
+      if(!raw) return false;
+      const state = JSON.parse(raw);
+      if(typeof state.cash === "number" && !isNaN(state.cash)) cash = state.cash;
+      if(state.holdings && typeof state.holdings === "object") holdings = state.holdings;
+      if(Array.isArray(state.trades)) trades = state.trades;
+      if(Array.isArray(state.equityHistory)) equityHistory = state.equityHistory;
+      if(Array.isArray(state.stocks)){
+        state.stocks.forEach(saved => {
+          const s = STOCKS.find(x => x.sym === saved.sym);
+          if(s && typeof saved.price === "number"){
+            s.price = saved.price;
+            s.prevPrice = saved.prevPrice || saved.price;
+            s.openPrice = saved.openPrice || saved.price;
+            s.high = saved.high || saved.price;
+            s.low = saved.low || saved.price;
+            s.volume = saved.volume || 500000;
+            if(Array.isArray(saved.history) && saved.history.length > 0) s.history = saved.history;
+          }
+        });
+      }
+      if(state.selectedSym){
+        const match = STOCKS.find(x => x.sym === state.selectedSym);
+        if(match) selectedStock = match;
+      }
+      return true;
+    } catch(e){
+      return false;
+    }
+  }
+
+  function resetSimulation(){
+    try { localStorage.removeItem(TRADING_STORAGE_KEY); } catch(e){}
+    cash = STARTING_CASH;
+    holdings = {};
+    trades = [];
+    equityHistory = [];
+    initStocks();
+    saveState();
+    location.reload();
+  }
+
   function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
   function forceReflow(el){ void el.offsetWidth; }
 
@@ -767,6 +839,7 @@
     renderPositions();
     renderPortfolioSummary();
     updateEstimate();
+    saveState();
   }
 
   function logTrade(side, sym, qty, price){
@@ -787,7 +860,7 @@
   el('qtyMax').addEventListener('click', ()=>{
     if(activeSide==='buy'){
       const maxQty = Math.floor(cash / selectedStock.price);
-      qtyInputEl.value = Math.max(1, maxQty);
+      qtyInputEl.value = Math.max(0, maxQty);
     } else {
       const h = holdings[selectedStock.sym];
       qtyInputEl.value = h ? h.qty : 0;
@@ -941,11 +1014,12 @@
     renderPositions();
     renderPortfolioSummary();
     renderIndex();
+    saveState();
   }
 
   /* ===================== RESET ===================== */
   el('resetBtn').addEventListener('click', ()=>{
-    location.reload();
+    resetSimulation();
   });
 
   /* ===================== RESIZE ===================== */
@@ -961,6 +1035,8 @@
   /* ===================== BOOT ===================== */
   function boot(){
     initStocks();
+    const loaded = loadState();
+    if(!loaded) saveState();
     createWatchlistRows();
     renderTicker();
     renderWatchlist();
