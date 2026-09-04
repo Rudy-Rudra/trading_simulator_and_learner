@@ -1,5 +1,4 @@
 name: Build SimDex APK
- ┃
  ┃     on:
  ┃       push:
  ┃         branches: [ "main", "master" ]
