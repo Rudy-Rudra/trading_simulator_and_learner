@@ -1,0 +1,16 @@
+name: Build SimDex APK
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Locate gradlew and Check Folders
+        run: |
+          echo "=== Root directory contents ==="
+          ls -la
+          echo "=== Finding gradlew file ==="
+          find . -name "gradlew"
